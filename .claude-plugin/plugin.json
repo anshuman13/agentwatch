@@ -1,0 +1,6 @@
+{
+  "name": "subagent-viz",
+  "version": "0.1.0",
+  "description": "Live monitor for Claude Code subagents, with A/B comparison and transcript analysis.",
+  "author": { "name": "anshuman" }
+}

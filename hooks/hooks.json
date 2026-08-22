@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "SubagentStart": [
+      { "hooks": [ { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/hook.py\"", "timeout": 10 } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/hook.py\"", "timeout": 10 } ] }
+    ],
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/hook.py\"", "timeout": 10 } ] }
+    ]
+  }
+}

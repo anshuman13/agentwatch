@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>subagent-viz</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="dot" id="pulse"></span> subagent-viz</div>
+  <nav>
+    <button class="tab active" data-view="live">Live</button>
+    <button class="tab" data-view="ab">A/B</button>
+    <button class="tab" data-view="tx">Transcripts</button>
+  </nav>
+  <div class="meta"><select id="session"></select><span id="status">—</span></div>
+</header>
+
+<main>
+  <section id="live" class="view active">
+    <div class="stats" id="stats"></div>
+    <div id="cards" class="cards"></div>
+    <div class="empty" id="live-empty" hidden>No subagents in this session yet.</div>
+  </section>
+
+  <section id="ab" class="view">
+    <div class="controls">
+      <label>Mode
+        <select id="mode"><option value="prompt">match prompts</option><option value="files">score files</option></select>
+      </label>
+      <label>Arm A <input id="pa" value="control"></label>
+      <label>Arm B <input id="pb" value="skill"></label>
+      <button id="run-ab">Compare</button>
+      <span class="hint" id="ab-hint">Regex matched against each agent's prompt.</span>
+    </div>
+    <div id="ab-out"></div>
+  </section>
+
+  <section id="tx" class="view">
+    <div id="tx-list" class="tx-list"></div>
+    <div id="tx-detail" class="tx-detail"><div class="empty">Select an agent.</div></div>
+  </section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

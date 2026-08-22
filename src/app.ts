@@ -55,7 +55,6 @@ function selectTab(view: string): void {
     t.setAttribute("aria-selected", String(on));
   });
   $$(".view").forEach((v) => v.classList.toggle("hidden", v.id !== view));
-  if (view === "history") void loadHistory();
   if (view === "ab") void runAB();
   if (view === "tx") renderTx();
 }
@@ -146,65 +145,6 @@ async function poll(): Promise<void> {
   } catch {
     $("#status").textContent = "server offline";
     $("#status").classList.add("text-red-600");
-  }
-}
-
-// ---------- History ----------
-
-let HFILTER = "";
-let HLIMIT = 60;
-
-async function loadHistory(): Promise<void> {
-  const q = new URLSearchParams({ limit: String(HLIMIT) });
-  if (HFILTER) q.set("project", HFILTER);
-  const d = (await (await fetch(`/api/history?${q}`)).json()) as HistoryView;
-
-  const opts = ["<option value=''>all projects</option>"]
-    .concat(d.projects.map((p) =>
-      `<option value="${esc(p)}"${p === HFILTER ? " selected" : ""}>${esc(proj(p))}</option>`))
-    .join("");
-
-  const cards = d.agents.map((a) => `
-    <div class="rounded-lg bg-ink-soft border border-ink-line p-3">
-      <div class="flex items-center gap-2 mb-1.5">
-        <span class="w-1.5 h-1.5 rounded-full shrink-0 ${DOT[a.status]}"></span>
-        <span class="font-mono text-xs text-slate-500">${esc(a.id.slice(0, 8))}</span>
-        <span class="ml-auto font-mono text-xs text-slate-500">${money(a.cost)}</span>
-      </div>
-      <div class="text-sm truncate">${esc(a.description || a.prompt.slice(0, 60) || "(untitled)")}</div>
-      <div class="text-xs text-slate-500 font-mono truncate mt-1">${esc(proj(a.project))}</div>
-      <div class="flex gap-3 mt-2 text-[11px] font-mono text-slate-500">
-        <span>${dur(a.duration)}</span><span>${a.tool_count} tools</span>
-        <span>${num(a.tokens.out)} out</span><span>${ago(a.mtime)}</span>
-      </div>
-    </div>`).join("");
-
-  const shown = d.agents.length;
-  const more = d.total - shown;
-  const count = more > 0
-    ? `showing ${shown} of ${d.total} finished runs`
-    : `${d.total} finished run${d.total === 1 ? "" : "s"}`;
-
-  $("#history").innerHTML = `
-    <div class="flex items-center gap-3 mb-4">
-      <select id="hproj" class="bg-ink-soft border border-ink-line rounded-lg px-3 py-1.5 text-sm">${opts}</select>
-      <span class="text-sm text-slate-500">${count}</span>
-    </div>
-    <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${cards}</div>
-    ${more > 0 ? `<div class="text-center mt-4">
-      <button id="hmore" class="border border-ink-line rounded-full px-5 py-2 text-sm hover:bg-slate-100">
-        Show ${Math.min(more, 60)} more</button></div>` : ""}`;
-
-  $<HTMLSelectElement>("#hproj").addEventListener("change", (e) => {
-    HFILTER = (e.target as HTMLSelectElement).value;
-    HLIMIT = 60;
-    void loadHistory();
-  });
-  if (more > 0) {
-    $("#hmore").addEventListener("click", () => {
-      HLIMIT += 60;
-      void loadHistory();
-    });
   }
 }
 
@@ -315,55 +255,106 @@ function tokenBar(t: Tokens): string {
     ${seg("out", "bg-sky-600")}${seg("in", "bg-violet-500")}${seg("cache_r", "bg-slate-400")}${seg("cache_w", "bg-slate-300")}</div>`;
 }
 
+let TFILTER = "";
+let TLIMIT = 40;
+
+function txItem(a: Agent): string {
+  return `<div class="tx-item px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100" data-id="${esc(a.id)}">
+    <div class="flex items-center gap-2 text-sm">
+      <span class="w-1.5 h-1.5 rounded-full shrink-0 ${DOT[a.status]}"></span>
+      <span class="font-mono text-xs">${esc(a.id.slice(0, 8))}</span>
+      <span class="ml-auto text-[11px] text-slate-500">${a.tool_count}⚒ ${dur(a.duration)}</span>
+    </div>
+    <div class="text-[11px] text-slate-500 truncate mt-1">${esc(a.description || a.prompt.slice(0, 50))}</div>
+  </div>`;
+}
+
+async function showTx(id: string): Promise<void> {
+  const a = (await (await fetch(`/api/agent?id=${encodeURIComponent(id)}`)).json()) as Agent;
+  const box = "rounded-xl bg-ink-soft border border-ink-line p-5 mb-4";
+  const pre = "bg-ink border border-ink-line rounded-lg p-3 overflow-auto max-h-80 text-xs font-mono text-slate-600 whitespace-pre-wrap break-words";
+  const stat = (v: string, l: string): string =>
+    `<div><div class="font-mono text-base">${v}</div><div class="text-[10px] uppercase tracking-wide text-slate-500">${l}</div></div>`;
+  $("#tx-detail").innerHTML = `
+    <div class="${box}">
+      <h2 class="font-medium">${esc(a.id.slice(0, 12))}
+        <span class="font-mono text-xs text-slate-500 ml-2">${esc(a.model || "")}</span></h2>
+      <div class="flex gap-6 mt-3">
+        ${stat(String(a.turns), "turns")}${stat(String(a.tool_count), "tools")}
+        ${stat(num(a.tokens.out), "output")}${stat(num(a.tokens.cache_r), "cache read")}
+        ${stat(dur(a.duration), "elapsed")}${stat(money(a.cost), "est. cost")}
+      </div>${tokenBar(a.tokens)}
+    </div>
+    <div class="${box}"><h2 class="font-medium mb-3">Prompt</h2><pre class="${pre}">${esc(a.prompt)}</pre></div>
+    <div class="${box}"><h2 class="font-medium mb-3">Steps</h2>
+      <ol class="space-y-0">${a.tools.map((t, i) => `
+        <li class="flex items-baseline gap-2.5 py-1.5 border-b border-ink-line last:border-0 text-xs">
+          <span class="font-mono text-[10px] text-slate-400 w-5 shrink-0 text-right">${i + 1}</span>
+          <span class="font-mono font-medium text-sky-700 shrink-0">${esc(t.name)}</span>
+          <span class="font-mono text-slate-500 truncate">${esc(t.input)}</span>
+        </li>`).join("") || `<li class="text-slate-400 text-xs">none</li>`}</ol></div>
+    <div class="${box}"><h2 class="font-medium mb-3">Final output</h2>
+      <pre class="${pre}">${esc(a.final.slice(0, 6000))}</pre></div>`;
+}
+
+async function loadTxList(): Promise<void> {
+  const q = new URLSearchParams({ limit: String(TLIMIT) });
+  if (TFILTER) q.set("project", TFILTER);
+  const h = (await (await fetch(`/api/history?${q}`)).json()) as HistoryView;
+
+  const live: Agent[] = (LAST?.tasks.flatMap((t) => t.agents) ?? [])
+    .filter((a) => !TFILTER || a.project === TFILTER);
+  const list = [...live, ...h.agents];
+
+  const opts = ["<option value=''>all projects</option>"]
+    .concat(h.projects.map((p) =>
+      `<option value="${esc(p)}"${p === TFILTER ? " selected" : ""}>${esc(proj(p))}</option>`))
+    .join("");
+
+  const more = h.total - h.agents.length;
+  const count = more > 0
+    ? `${h.agents.length} of ${h.total} finished`
+    : `${h.total} finished run${h.total === 1 ? "" : "s"}`;
+
+  $("#tx-list").innerHTML = `
+    <div class="p-1 mb-1">
+      <select id="tproj" class="w-full bg-ink border border-ink-line rounded-lg px-2 py-1.5 text-xs">${opts}</select>
+      <div class="text-[11px] text-slate-500 mt-1.5 px-1">
+        ${live.length ? `${live.length} live · ` : ""}${count}
+      </div>
+    </div>
+    ${list.map(txItem).join("") || `<div class="p-6 text-center text-slate-500 text-sm">No agents.</div>`}
+    ${more > 0 ? `<div class="p-2 pt-3">
+      <button id="tmore" class="w-full border border-ink-line rounded-full px-3 py-1.5 text-xs hover:bg-slate-100">
+        Show ${Math.min(more, 40)} more</button></div>` : ""}`;
+
+  $<HTMLSelectElement>("#tproj").addEventListener("change", (e) => {
+    TFILTER = (e.target as HTMLSelectElement).value;
+    TLIMIT = 40;
+    void loadTxList();
+  });
+  if (more > 0) {
+    $("#tmore").addEventListener("click", () => {
+      TLIMIT += 40;
+      void loadTxList();
+    });
+  }
+
+  $$(".tx-item").forEach((el) => el.addEventListener("click", () => {
+    $$(".tx-item").forEach((x) => x.classList.remove("bg-sky-50"));
+    el.classList.add("bg-sky-50");
+    void showTx(el.dataset.id!);
+  }));
+}
+
 function renderTx(): void {
-  const all: Agent[] = (LAST?.tasks.flatMap((t) => t.agents)) ?? [];
-  void (async () => {
-    const h = (await (await fetch("/api/history?limit=40")).json()) as HistoryView;
-    const list = [...all, ...h.agents];
+  if (!$("#tx").dataset.ready) {
+    $("#tx").dataset.ready = "1";
     $("#tx").innerHTML = `<div class="flex gap-4 items-start">
       <div id="tx-list" class="w-72 shrink-0 rounded-xl bg-ink-soft border border-ink-line p-2 max-h-[calc(100vh-140px)] overflow-y-auto"></div>
-      <div id="tx-detail" class="flex-1 min-w-0"></div></div>`;
-    $("#tx-list").innerHTML = list.map((a) =>
-      `<div class="tx-item px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100" data-id="${esc(a.id)}">
-        <div class="flex items-center gap-2 text-sm">
-          <span class="w-1.5 h-1.5 rounded-full shrink-0 ${DOT[a.status]}"></span>
-          <span class="font-mono text-xs">${esc(a.id.slice(0, 8))}</span>
-          <span class="ml-auto text-[11px] text-slate-500">${a.tool_count}⚒ ${dur(a.duration)}</span>
-        </div>
-        <div class="text-[11px] text-slate-500 truncate mt-1">${esc(a.description || a.prompt.slice(0, 50))}</div>
-      </div>`).join("") || `<div class="p-6 text-center text-slate-500 text-sm">No agents.</div>`;
-    $("#tx-detail").innerHTML = `<div class="rounded-xl bg-ink-soft border border-ink-line p-10 text-center text-slate-500">Select an agent.</div>`;
-
-    $$(".tx-item").forEach((el) => el.addEventListener("click", async () => {
-      $$(".tx-item").forEach((x) => x.classList.remove("bg-sky-50"));
-      el.classList.add("bg-sky-50");
-      const a = (await (await fetch(`/api/agent?id=${encodeURIComponent(el.dataset.id!)}`)).json()) as Agent;
-      const box = "rounded-xl bg-ink-soft border border-ink-line p-5 mb-4";
-      const pre = "bg-ink border border-ink-line rounded-lg p-3 overflow-auto max-h-80 text-xs font-mono text-slate-600 whitespace-pre-wrap break-words";
-      const stat = (v: string, l: string): string =>
-        `<div><div class="font-mono text-base">${v}</div><div class="text-[10px] uppercase tracking-wide text-slate-500">${l}</div></div>`;
-      $("#tx-detail").innerHTML = `
-        <div class="${box}">
-          <h2 class="font-medium">${esc(a.id.slice(0, 12))}
-            <span class="font-mono text-xs text-slate-500 ml-2">${esc(a.model || "")}</span></h2>
-          <div class="flex gap-6 mt-3">
-            ${stat(String(a.turns), "turns")}${stat(String(a.tool_count), "tools")}
-            ${stat(num(a.tokens.out), "output")}${stat(num(a.tokens.cache_r), "cache read")}
-            ${stat(dur(a.duration), "elapsed")}${stat(money(a.cost), "est. cost")}
-          </div>${tokenBar(a.tokens)}
-        </div>
-        <div class="${box}"><h2 class="font-medium mb-3">Prompt</h2><pre class="${pre}">${esc(a.prompt)}</pre></div>
-        <div class="${box}"><h2 class="font-medium mb-3">Steps</h2>
-          <ol class="space-y-0">${a.tools.map((t, i) => `
-            <li class="flex items-baseline gap-2.5 py-1.5 border-b border-ink-line last:border-0 text-xs">
-              <span class="font-mono text-[10px] text-slate-400 w-5 shrink-0 text-right">${i + 1}</span>
-              <span class="font-mono font-medium text-sky-700 shrink-0">${esc(t.name)}</span>
-              <span class="font-mono text-slate-500 truncate">${esc(t.input)}</span>
-            </li>`).join("") || `<li class="text-slate-400 text-xs">none</li>`}</ol></div>
-        <div class="${box}"><h2 class="font-medium mb-3">Final output</h2>
-          <pre class="${pre}">${esc(a.final.slice(0, 6000))}</pre></div>`;
-    }));
-  })();
+      <div id="tx-detail" class="flex-1 min-w-0"><div class="rounded-xl bg-ink-soft border border-ink-line p-10 text-center text-slate-500">Select an agent.</div></div></div>`;
+  }
+  void loadTxList();
 }
 
 selectTab("live");

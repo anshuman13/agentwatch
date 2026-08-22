@@ -8,11 +8,9 @@ Claude Code can fan out to many subagents at once, and the terminal tells you on
 
 **Live** (the main view) shows only what is running right now, across every local Claude Code session, polling every 2 seconds. Agents are grouped by the task that spawned them, so a fan-out of six subagents reads as one task with six rows rather than six unrelated cards. Each row shows the tool call in flight, elapsed time, output tokens, and an estimated cost.
 
-**History** is everything finished, as small cards, filterable by project.
-
 **A/B** compares two groups of agents on the same task. Point it at agent prompts (regex) or at the files agents wrote (comma-separated paths or globs), give it a set of criteria, and it reports mean word count and per-criterion coverage for each arm. Built for prompt experiments: run the same task with and without a change, see whether the change cost you anything.
 
-**Transcripts** drills into one agent: model, turn count, token breakdown including cache reads, estimated cost, the full prompt, every tool call in order, and the final output.
+**Transcripts** lists every agent, running and finished, filterable by project and paged 40 at a time. Selecting one drills into it: model, turn count, token breakdown including cache reads, estimated cost, the full prompt, every tool call in order, and the final output.
 
 ### About the cost figures
 

@@ -3,45 +3,54 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>subagent-viz</title>
+<title>agentwatch</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <header>
-  <div class="brand"><span class="dot" id="pulse"></span> subagent-viz</div>
-  <nav>
-    <button class="tab active" data-view="live">Live</button>
-    <button class="tab" data-view="ab">A/B</button>
-    <button class="tab" data-view="tx">Transcripts</button>
+  <div class="brand"><span class="dot" id="pulse"></span> <span>agentwatch</span></div>
+  <nav role="tablist">
+    <button class="tab active" role="tab" aria-selected="true" data-view="live">Live</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="ab">A/B</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="tx">Transcripts</button>
+    <span class="tab-indicator"></span>
   </nav>
-  <div class="meta"><select id="session"></select><span id="status">—</span></div>
+  <div class="meta"><select id="session" aria-label="Session"></select><span id="status">-</span></div>
 </header>
 
 <main>
-  <section id="live" class="view active">
+  <section id="live" class="view active" role="tabpanel">
     <div class="stats" id="stats"></div>
     <div id="cards" class="cards"></div>
-    <div class="empty" id="live-empty" hidden>No subagents in this session yet.</div>
+    <div class="empty" id="live-empty" hidden>
+      <span class="material-icon">∅</span>No subagents in this session yet.
+    </div>
   </section>
 
-  <section id="ab" class="view">
+  <section id="ab" class="view" role="tabpanel">
     <div class="controls">
       <label>Mode
-        <select id="mode"><option value="prompt">match prompts</option><option value="files">score files</option></select>
+        <select id="mode">
+          <option value="prompt">match prompts</option>
+          <option value="files">score files</option>
+        </select>
       </label>
       <label>Arm A <input id="pa" value="control"></label>
       <label>Arm B <input id="pb" value="skill"></label>
-      <button id="run-ab">Compare</button>
+      <button id="run-ab" class="md-ripple">Compare</button>
       <span class="hint" id="ab-hint">Regex matched against each agent's prompt.</span>
     </div>
     <div id="ab-out"></div>
   </section>
 
-  <section id="tx" class="view">
+  <section id="tx" class="view" role="tabpanel">
     <div id="tx-list" class="tx-list"></div>
-    <div id="tx-detail" class="tx-detail"><div class="empty">Select an agent.</div></div>
+    <div id="tx-detail" class="tx-detail">
+      <div class="empty"><span class="material-icon">≡</span>Select an agent.</div>
+    </div>
   </section>
 </main>
-<script src="/app.js"></script>
+<script type="module" src="/app.js"></script>
 </body>
 </html>

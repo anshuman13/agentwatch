@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""subagent-viz local dashboard. Stdlib only."""
+"""agentwatch local dashboard. Stdlib only."""
 import json, os, sys, re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -49,7 +49,19 @@ class H(BaseHTTPRequestHandler):
             return self._file(p[1:], "text/javascript" if p.endswith(".js") else "text/css")
 
         if p == "/api/live":
-            return self._send(200, svcore.live_view(q.get("session", [None])[0]))
+            return self._send(200, svcore.running_view())
+
+        if p == "/api/history":
+            def _int(name, dflt):
+                try:
+                    return int(q.get(name, [dflt])[0])
+                except (TypeError, ValueError):
+                    return dflt
+            return self._send(200, svcore.history_view(
+                project=q.get("project", [None])[0],
+                limit=max(1, min(_int("limit", 60), 200)),
+                offset=max(0, _int("offset", 0)),
+            ))
 
         if p == "/api/agent":
             aid = q.get("id", [""])[0]
@@ -154,9 +166,9 @@ class H(BaseHTTPRequestHandler):
 
 
 def main():
-    port = int(os.environ.get("SUBAGENT_VIZ_PORT", "7788"))
+    port = int(os.environ.get("AGENTWATCH_PORT", "7788"))
     srv = ThreadingHTTPServer(("127.0.0.1", port), H)
-    print(f"subagent-viz http://127.0.0.1:{port}")
+    print(f"agentwatch http://127.0.0.1:{port}")
     sys.stdout.flush()
     srv.serve_forever()
 

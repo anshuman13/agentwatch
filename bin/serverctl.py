@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""start | stop | status for the subagent-viz server."""
+"""start | stop | status for the agentwatch server."""
 import os, sys, subprocess, urllib.request, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PORT = os.environ.get("SUBAGENT_VIZ_PORT", "7788")
+PORT = os.environ.get("AGENTWATCH_PORT", "7788")
 URL = f"http://127.0.0.1:{PORT}"
 
 
@@ -19,7 +19,7 @@ def start():
     if up():
         print(f"already running {URL}")
         return
-    log = os.path.expanduser("~/.claude/subagent-viz/server.log")
+    log = os.path.expanduser("~/.claude/agentwatch/server.log")
     os.makedirs(os.path.dirname(log), exist_ok=True)
     with open(log, "a") as f:
         subprocess.Popen([sys.executable, os.path.join(HERE, "server.py")],

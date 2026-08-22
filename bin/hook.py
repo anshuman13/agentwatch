@@ -11,7 +11,7 @@ def ensure_server(port):
     except Exception:
         pass
     srv = os.path.join(os.path.dirname(os.path.abspath(__file__)), "server.py")
-    log = os.path.expanduser("~/.claude/subagent-viz/server.log")
+    log = os.path.expanduser("~/.claude/agentwatch/server.log")
     os.makedirs(os.path.dirname(log), exist_ok=True)
     with open(log, "a") as f:
         subprocess.Popen([sys.executable, srv], stdout=f, stderr=f,
@@ -24,7 +24,7 @@ def main():
     except Exception:
         d = {}
 
-    port = os.environ.get("SUBAGENT_VIZ_PORT", "7788")
+    port = os.environ.get("AGENTWATCH_PORT", "7788")
     try:
         ensure_server(port)
     except Exception:

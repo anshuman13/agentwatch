@@ -48,9 +48,9 @@ function selectTab(view: string): void {
   VIEW = view;
   $$(".tab").forEach((t) => {
     const on = t.dataset.view === view;
-    t.classList.toggle("text-slate-100", on);
-    t.classList.toggle("border-sky-400", on);
-    t.classList.toggle("text-slate-400", !on);
+    t.classList.toggle("text-slate-900", on);
+    t.classList.toggle("border-sky-600", on);
+    t.classList.toggle("text-slate-600", !on);
     t.classList.toggle("border-transparent", !on);
     t.setAttribute("aria-selected", String(on));
   });
@@ -67,16 +67,16 @@ $$(".tab").forEach((t) =>
 
 function agentRow(a: Agent): string {
   const tool = a.last_tool
-    ? `<span class="text-sky-300">${esc(a.last_tool)}</span>${
+    ? `<span class="text-sky-700">${esc(a.last_tool)}</span>${
         a.last_input ? ` <span class="text-slate-500">${esc(a.last_input.slice(0, 60))}</span>` : ""}`
-    : `<span class="text-slate-600">starting…</span>`;
+    : `<span class="text-slate-400">starting…</span>`;
   return `<div class="flex items-center gap-3 px-4 py-2.5 border-t border-ink-line text-sm">
     <span class="w-1.5 h-1.5 rounded-full shrink-0 ${DOT[a.status]}"></span>
     <span class="font-mono text-xs text-slate-500 w-16 shrink-0">${esc(a.id.slice(0, 8))}</span>
     <span class="flex-1 min-w-0 truncate font-mono text-xs">${tool}</span>
-    <span class="font-mono text-xs text-slate-400 w-12 text-right shrink-0">${dur(a.elapsed)}</span>
-    <span class="font-mono text-xs text-slate-400 w-14 text-right shrink-0">${num(a.tokens.out)}</span>
-    <span class="font-mono text-xs text-slate-400 w-16 text-right shrink-0">${money(a.cost)}</span>
+    <span class="font-mono text-xs text-slate-600 w-12 text-right shrink-0">${dur(a.elapsed)}</span>
+    <span class="font-mono text-xs text-slate-600 w-14 text-right shrink-0">${num(a.tokens.out)}</span>
+    <span class="font-mono text-xs text-slate-600 w-16 text-right shrink-0">${money(a.cost)}</span>
   </div>`;
 }
 
@@ -107,20 +107,17 @@ function taskBlock(t: TaskGroup): string {
 }
 
 function renderLive(d: LiveView): void {
-  $("#pulse").className = `w-2 h-2 rounded-full ${d.running ? "bg-run animate-pulse" : "bg-slate-600"}`;
+  $("#pulse").className = `w-2 h-2 rounded-full ${d.running ? "bg-run animate-pulse" : "bg-slate-400"}`;
   $("#scan").textContent = `${d.sessions_scanned} sessions · ${d.total_agents} agents`;
 
   if (!d.tasks.length) {
     const lf = d.last_finished;
     $("#live").innerHTML = `<div class="rounded-xl bg-ink-soft border border-ink-line p-12 text-center">
-      <div class="text-slate-300 font-medium">Nothing running right now</div>
-      <div class="text-sm text-slate-500 mt-2">
-        Watching ${d.sessions_scanned} sessions across every local project.
-      </div>
+      <div class="text-slate-900 font-medium">Nothing running right now</div>
       ${lf ? `<div class="text-sm text-slate-500 mt-4 pt-4 border-t border-ink-line inline-block px-6">
-        Last finished: <span class="text-slate-300">${esc(lf.description || lf.id.slice(0, 8))}</span>
-        <span class="text-slate-600">·</span> ${esc(proj(lf.project))}
-        <span class="text-slate-600">·</span> ${ago(lf.mtime)}
+        Last finished: <span class="text-slate-900">${esc(lf.description || lf.id.slice(0, 8))}</span>
+        <span class="text-slate-400">·</span> ${esc(proj(lf.project))}
+        <span class="text-slate-400">·</span> ${ago(lf.mtime)}
       </div>` : ""}
     </div>`;
     return;
@@ -134,7 +131,7 @@ function renderLive(d: LiveView): void {
       <span><b class="font-mono text-lg">${d.tasks.length}</b> <span class="text-slate-500">tasks</span></span>
       <span><b class="font-mono text-lg">${num(totalOut)}</b> <span class="text-slate-500">out</span></span>
       <span><b class="font-mono text-lg">${money(totalCost)}</b> <span class="text-slate-500">est. cost</span></span>
-      <span class="ml-auto text-xs text-slate-600">Press Esc in the originating session to stop an agent.</span>
+      <span class="ml-auto text-xs text-slate-500">Press Esc in the originating session to stop an agent.</span>
     </div>
     <div class="space-y-3">${d.tasks.map(taskBlock).join("")}</div>`;
 }
@@ -145,10 +142,10 @@ async function poll(): Promise<void> {
     LAST = d;
     if (VIEW === "live") renderLive(d);
     $("#status").textContent = new Date().toLocaleTimeString();
-    $("#status").classList.remove("text-red-400");
+    $("#status").classList.remove("text-red-600");
   } catch {
     $("#status").textContent = "server offline";
-    $("#status").classList.add("text-red-400");
+    $("#status").classList.add("text-red-600");
   }
 }
 
@@ -174,7 +171,7 @@ async function loadHistory(): Promise<void> {
         <span class="ml-auto font-mono text-xs text-slate-500">${money(a.cost)}</span>
       </div>
       <div class="text-sm truncate">${esc(a.description || a.prompt.slice(0, 60) || "(untitled)")}</div>
-      <div class="text-xs text-slate-600 font-mono truncate mt-1">${esc(proj(a.project))}</div>
+      <div class="text-xs text-slate-500 font-mono truncate mt-1">${esc(proj(a.project))}</div>
       <div class="flex gap-3 mt-2 text-[11px] font-mono text-slate-500">
         <span>${dur(a.duration)}</span><span>${a.tool_count} tools</span>
         <span>${num(a.tokens.out)} out</span><span>${ago(a.mtime)}</span>
@@ -208,14 +205,14 @@ function abShell(): void {
   $("#ab").innerHTML = `
     <div class="flex flex-wrap items-end gap-3 rounded-xl bg-ink-soft border border-ink-line p-4 mb-4">
       <label class="flex flex-col gap-1.5 text-[11px] uppercase tracking-wide text-slate-500">Mode
-        <select id="mode" class="bg-ink border border-ink-line rounded-lg px-3 py-1.5 text-sm normal-case text-slate-200">
+        <select id="mode" class="bg-ink border border-ink-line rounded-lg px-3 py-1.5 text-sm normal-case text-slate-800">
           <option value="prompt">match prompts</option><option value="files">score files</option>
         </select></label>
       <label class="flex flex-col gap-1.5 text-[11px] uppercase tracking-wide text-slate-500">Arm A
-        <input id="pa" value="control" class="bg-ink border border-ink-line rounded-lg px-3 py-1.5 text-sm text-slate-200"></label>
+        <input id="pa" value="control" class="bg-ink border border-ink-line rounded-lg px-3 py-1.5 text-sm text-slate-800"></label>
       <label class="flex flex-col gap-1.5 text-[11px] uppercase tracking-wide text-slate-500">Arm B
-        <input id="pb" value="skill" class="bg-ink border border-ink-line rounded-lg px-3 py-1.5 text-sm text-slate-200"></label>
-      <button id="run-ab" class="bg-sky-500 hover:bg-sky-400 text-slate-900 font-medium rounded-full px-5 py-2 text-sm">Compare</button>
+        <input id="pb" value="skill" class="bg-ink border border-ink-line rounded-lg px-3 py-1.5 text-sm text-slate-800"></label>
+      <button id="run-ab" class="bg-sky-600 hover:bg-sky-500 text-white font-medium rounded-full px-5 py-2 text-sm">Compare</button>
       <span id="ab-hint" class="text-xs text-slate-500"></span>
     </div>
     <div id="ab-out"></div>`;
@@ -271,7 +268,7 @@ async function runAB(): Promise<void> {
     const ah = d.a.rows.filter((r) => r.hits.includes(c)).length;
     const bh = d.b.rows.filter((r) => r.hits.includes(c)).length;
     const cls = (h: number, n: number): string =>
-      h === n && h ? "text-run" : h ? "" : "text-red-400/80";
+      h === n && h ? "text-run" : h ? "" : "text-red-600";
     return `<tr><td class="${TD}">${esc(c)}</td>
       <td class="${TD} ${N} ${cls(ah, d.a.rows.length)}">${ah}/${d.a.rows.length}</td>
       <td class="${TD} ${N} ${cls(bh, d.b.rows.length)}">${bh}/${d.b.rows.length}</td></tr>`;
@@ -298,7 +295,7 @@ function tokenBar(t: Tokens): string {
   const seg = (k: keyof Tokens, cls: string): string =>
     `<i class="${cls}" style="width:${(t[k] / total) * 100}%" title="${k}: ${t[k]}"></i>`;
   return `<div class="flex h-2 rounded-full overflow-hidden mt-3 bg-ink [&>i]:block">
-    ${seg("out", "bg-sky-400")}${seg("in", "bg-violet-400")}${seg("cache_r", "bg-slate-500")}${seg("cache_w", "bg-slate-700")}</div>`;
+    ${seg("out", "bg-sky-600")}${seg("in", "bg-violet-500")}${seg("cache_r", "bg-slate-400")}${seg("cache_w", "bg-slate-300")}</div>`;
 }
 
 function renderTx(): void {
@@ -310,7 +307,7 @@ function renderTx(): void {
       <div id="tx-list" class="w-72 shrink-0 rounded-xl bg-ink-soft border border-ink-line p-2 max-h-[calc(100vh-140px)] overflow-y-auto"></div>
       <div id="tx-detail" class="flex-1 min-w-0"></div></div>`;
     $("#tx-list").innerHTML = list.map((a) =>
-      `<div class="tx-item px-3 py-2.5 rounded-lg cursor-pointer hover:bg-ink-line" data-id="${esc(a.id)}">
+      `<div class="tx-item px-3 py-2.5 rounded-lg cursor-pointer hover:bg-slate-100" data-id="${esc(a.id)}">
         <div class="flex items-center gap-2 text-sm">
           <span class="w-1.5 h-1.5 rounded-full shrink-0 ${DOT[a.status]}"></span>
           <span class="font-mono text-xs">${esc(a.id.slice(0, 8))}</span>
@@ -321,11 +318,11 @@ function renderTx(): void {
     $("#tx-detail").innerHTML = `<div class="rounded-xl bg-ink-soft border border-ink-line p-10 text-center text-slate-500">Select an agent.</div>`;
 
     $$(".tx-item").forEach((el) => el.addEventListener("click", async () => {
-      $$(".tx-item").forEach((x) => x.classList.remove("bg-ink-line"));
-      el.classList.add("bg-ink-line");
+      $$(".tx-item").forEach((x) => x.classList.remove("bg-sky-50"));
+      el.classList.add("bg-sky-50");
       const a = (await (await fetch(`/api/agent?id=${encodeURIComponent(el.dataset.id!)}`)).json()) as Agent;
       const box = "rounded-xl bg-ink-soft border border-ink-line p-5 mb-4";
-      const pre = "bg-ink border border-ink-line rounded-lg p-3 overflow-auto max-h-80 text-xs font-mono text-slate-400 whitespace-pre-wrap break-words";
+      const pre = "bg-ink border border-ink-line rounded-lg p-3 overflow-auto max-h-80 text-xs font-mono text-slate-600 whitespace-pre-wrap break-words";
       const stat = (v: string, l: string): string =>
         `<div><div class="font-mono text-base">${v}</div><div class="text-[10px] uppercase tracking-wide text-slate-500">${l}</div></div>`;
       $("#tx-detail").innerHTML = `
@@ -342,10 +339,10 @@ function renderTx(): void {
         <div class="${box}"><h2 class="font-medium mb-3">Steps</h2>
           <ol class="space-y-0">${a.tools.map((t, i) => `
             <li class="flex items-baseline gap-2.5 py-1.5 border-b border-ink-line last:border-0 text-xs">
-              <span class="font-mono text-[10px] text-slate-600 w-5 shrink-0 text-right">${i + 1}</span>
-              <span class="font-mono font-medium text-sky-300 shrink-0">${esc(t.name)}</span>
+              <span class="font-mono text-[10px] text-slate-400 w-5 shrink-0 text-right">${i + 1}</span>
+              <span class="font-mono font-medium text-sky-700 shrink-0">${esc(t.name)}</span>
               <span class="font-mono text-slate-500 truncate">${esc(t.input)}</span>
-            </li>`).join("") || `<li class="text-slate-600 text-xs">none</li>`}</ol></div>
+            </li>`).join("") || `<li class="text-slate-400 text-xs">none</li>`}</ol></div>
         <div class="${box}"><h2 class="font-medium mb-3">Final output</h2>
           <pre class="${pre}">${esc(a.final.slice(0, 6000))}</pre></div>`;
     }));

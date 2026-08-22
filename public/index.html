@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8,28 +8,27 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
-  darkMode: 'class',
   theme: { extend: {
     colors: {
-      ink:   { DEFAULT:'#0b0d11', soft:'#141821', line:'#232936' },
-      run:   '#34d399', idle: '#fbbf24', done: '#60a5fa',
+      ink:   { DEFAULT:'#f7f8fa', soft:'#ffffff', line:'#e3e6ec' },
+      run:   '#059669', idle: '#b45309', done: '#2563eb',
     },
     fontFamily: { mono: ['ui-monospace','SF Mono','Menlo','monospace'] },
   }},
 }
 </script>
 </head>
-<body class="bg-ink text-slate-200 font-sans antialiased">
+<body class="bg-ink text-slate-800 font-sans antialiased">
 
 <header class="sticky top-0 z-20 flex items-center gap-6 h-14 px-6 bg-ink-soft border-b border-ink-line">
   <div class="flex items-center gap-2.5 font-semibold tracking-tight">
-    <span id="pulse" class="w-2 h-2 rounded-full bg-slate-600"></span> agentwatch
+    <span id="pulse" class="w-2 h-2 rounded-full bg-slate-400"></span> agentwatch
   </div>
   <nav class="flex h-full" role="tablist">
-    <button class="tab h-full px-4 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-100" data-view="live" role="tab">Live</button>
-    <button class="tab h-full px-4 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-100" data-view="history" role="tab">History</button>
-    <button class="tab h-full px-4 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-100" data-view="ab" role="tab">A/B</button>
-    <button class="tab h-full px-4 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-100" data-view="tx" role="tab">Transcripts</button>
+    <button class="tab h-full px-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-900" data-view="live" role="tab">Live</button>
+    <button class="tab h-full px-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-900" data-view="history" role="tab">History</button>
+    <button class="tab h-full px-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-900" data-view="ab" role="tab">A/B</button>
+    <button class="tab h-full px-4 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-900" data-view="tx" role="tab">Transcripts</button>
   </nav>
   <div class="ml-auto flex items-center gap-4 text-xs font-mono text-slate-500">
     <span id="scan"></span><span id="status">-</span>

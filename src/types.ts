@@ -11,42 +11,73 @@ export interface ToolCall {
   t: number;
 }
 
-export type Status = "running" | "idle" | "done";
+export type Status = "running" | "stalled" | "done";
 
 export interface Agent {
   id: string;
   path: string;
-  label: string;
-  agent_type: string;
+  task_id: string | null;
+  description: string | null;
+  agent_type: string | null;
+  parent_agent_id: string | null;
+  spawn_depth: number | null;
   prompt: string;
-  model: string;
+  model: string | null;
+  label: string;
   status: Status;
   tools: ToolCall[];
   tool_count: number;
   last_tool: string | null;
+  last_input: string;
   final: string;
   turns: number;
   tokens: Tokens;
-  started: number;
-  updated: number;
+  cost: number | null;
+  started: number | null;
+  updated: number | null;
   duration: number;
   elapsed: number;
   mtime: number;
+  project: string;
+  session: string;
+  session_dir: string;
 }
 
-export interface SessionRef {
-  dir: string;
+export interface TaskGroup {
+  task_id: string;
+  description: string | null;
+  project: string;
   session: string;
+  agents: Agent[];
+  count: number;
+  tokens: Tokens;
+  cost: number | null;
+  cost_partial: boolean;
+  started: number;
+}
+
+export interface LastFinished {
+  id: string;
+  description: string | null;
   project: string;
   mtime: number;
 }
 
 export interface LiveView {
-  agents: Agent[];
-  session: string | null;
-  sessions: SessionRef[];
-  now: number;
+  tasks: TaskGroup[];
   running: number;
+  sessions_scanned: number;
+  total_agents: number;
+  last_finished: LastFinished | null;
+  now: number;
+}
+
+export interface HistoryView {
+  agents: Agent[];
+  total: number;
+  offset: number;
+  limit: number;
+  projects: string[];
 }
 
 export interface CompareRow {

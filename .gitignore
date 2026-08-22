@@ -6,3 +6,4 @@ __pycache__/
 *.png
 node_modules/
 dashboard/types.js
+public/types.js

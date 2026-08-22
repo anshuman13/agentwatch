@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """agentwatch local dashboard. Stdlib only."""
-import json, os, sys, re
+import json, os, sys, re, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import svcore
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DASH = os.path.join(os.path.dirname(HERE), "dashboard")
+DASH = os.path.join(os.path.dirname(HERE), "public")
 
 # Bugs verified against invoice_matching; used by the A/B view.
 DEFAULT_CRITERIA = [
@@ -45,8 +45,8 @@ class H(BaseHTTPRequestHandler):
 
         if p == "/":
             return self._file("index.html", "text/html; charset=utf-8")
-        if p in ("/app.js", "/style.css"):
-            return self._file(p[1:], "text/javascript" if p.endswith(".js") else "text/css")
+        if p == "/app.js":
+            return self._file("app.js", "text/javascript")
 
         if p == "/api/live":
             return self._send(200, svcore.running_view())
@@ -68,7 +68,12 @@ class H(BaseHTTPRequestHandler):
             for s in svcore.find_sessions():
                 f = os.path.join(s["dir"], f"agent-{aid}.jsonl")
                 if os.path.exists(f):
-                    return self._send(200, svcore.parse_transcript(f))
+                    a = svcore.parse_transcript(f)
+                    if a is None:
+                        return self._send(404, {"error": "unreadable"})
+                    a["project"], a["session"], a["session_dir"] = s["project"], s["session"], s["dir"]
+                    return self._send(200, svcore._decorate(
+                        a, svcore.read_state().get("agents", {}), time.time()))
             return self._send(404, {"error": "not found"})
 
         if p == "/api/compare":

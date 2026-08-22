@@ -65,6 +65,8 @@ class H(BaseHTTPRequestHandler):
 
         if p == "/api/agent":
             aid = q.get("id", [""])[0]
+            if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", aid):
+                return self._send(400, {"error": "bad id"})
             for s in svcore.find_sessions():
                 f = os.path.join(s["dir"], f"agent-{aid}.jsonl")
                 if os.path.exists(f):

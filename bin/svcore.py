@@ -27,14 +27,28 @@ RATES = {
 }
 
 
+NOT_BILLABLE = {"<synthetic>"}
+
+
 def _rate(model):
-    """Longest-prefix match so dated ids resolve. None => unknown, never guessed."""
-    if not model:
+    """Resolve a model id to (input, output) $/MTok. None => unknown, never guessed.
+
+    Only a bare id or a dated snapshot (claude-opus-5-20260514) resolves. A
+    bracketed variant such as claude-opus-5[1m] denotes different pricing we do
+    not have a rate for, so it stays unknown rather than being billed as the
+    base model.
+    """
+    if not model or model in NOT_BILLABLE:
         return None
+    if "[" in model:
+        return None
+    if model in RATES:
+        return RATES[model]
     best = None
     for k, v in RATES.items():
-        if model.startswith(k) and (best is None or len(k) > len(best[0])):
-            best = (k, v)
+        if model.startswith(k + "-") and model[len(k) + 1:].isdigit():
+            if best is None or len(k) > len(best[0]):
+                best = (k, v)
     return best[1] if best else None
 
 

@@ -131,8 +131,9 @@ async function poll() {
 }
 // ---------- History ----------
 let HFILTER = "";
+let HLIMIT = 60;
 async function loadHistory() {
-    const q = new URLSearchParams({ limit: "60" });
+    const q = new URLSearchParams({ limit: String(HLIMIT) });
     if (HFILTER)
         q.set("project", HFILTER);
     const d = (await (await fetch(`/api/history?${q}`)).json());
@@ -153,16 +154,31 @@ async function loadHistory() {
         <span>${num(a.tokens.out)} out</span><span>${ago(a.mtime)}</span>
       </div>
     </div>`).join("");
+    const shown = d.agents.length;
+    const more = d.total - shown;
+    const count = more > 0
+        ? `showing ${shown} of ${d.total} finished runs`
+        : `${d.total} finished run${d.total === 1 ? "" : "s"}`;
     $("#history").innerHTML = `
     <div class="flex items-center gap-3 mb-4">
       <select id="hproj" class="bg-ink-soft border border-ink-line rounded-lg px-3 py-1.5 text-sm">${opts}</select>
-      <span class="text-sm text-slate-500">${d.total} finished runs</span>
+      <span class="text-sm text-slate-500">${count}</span>
     </div>
-    <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${cards}</div>`;
+    <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${cards}</div>
+    ${more > 0 ? `<div class="text-center mt-4">
+      <button id="hmore" class="border border-ink-line rounded-full px-5 py-2 text-sm hover:bg-slate-100">
+        Show ${Math.min(more, 60)} more</button></div>` : ""}`;
     $("#hproj").addEventListener("change", (e) => {
         HFILTER = e.target.value;
+        HLIMIT = 60;
         void loadHistory();
     });
+    if (more > 0) {
+        $("#hmore").addEventListener("click", () => {
+            HLIMIT += 60;
+            void loadHistory();
+        });
+    }
 }
 // ---------- A/B ----------
 const label = (p) => {
